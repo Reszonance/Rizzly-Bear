@@ -4,6 +4,11 @@ import openai
 import os
 from dotenv import load_dotenv
 import pymongo
+import io
+from PIL import Image
+import easyocr
+import numpy as np
+from spellchecker import SpellChecker
 
 load_dotenv()
 
@@ -29,7 +34,45 @@ intents.messages = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 convo_history = None
+channel_id = 1081845107206131743 # Discord Channel ID for Image Processing 
 
+# Initialize the spell checker
+spell = SpellChecker()
+
+@bot.event
+async def on_ready():
+    print(f'{bot.user.name} is ready!')
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user or len(message.attachments) == 0 or message.channel.id != channel_id:
+        return
+
+    attachment = message.attachments[0]
+    if attachment.content_type.startswith('image/'):
+        image_bytes = await attachment.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        reader = easyocr.Reader(['en'])
+        text = reader.readtext(np.array(image))
+        text = "\n".join([result[1] for result in text])
+
+        # POST PROCESSING TECHNIQUES
+
+        # Split the text into words
+        words = text.split()
+
+        # Correct any misspelled words
+        corrected_words = []
+        for word in words:
+            corrected_word = spell.correction(word)
+            if corrected_word is not None:
+                corrected_words.append(corrected_word)
+
+        # Join the corrected words back into a string
+        corrected_text = ' '.join(corrected_words)
+
+        channel = bot.get_channel(channel_id)
+        await channel.send(text)
 
 async def generate_pickup_line(prompt):
     # Generate response using OpenAI API

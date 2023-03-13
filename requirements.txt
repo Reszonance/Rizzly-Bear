@@ -1,4 +1,9 @@
-discord.py
-openai
-python-dotenv
-pymongo
+discord.py==2.2.2
+easyocr==1.6.2
+numpy==1.24.2
+openai==0.27.2
+Pillow==9.4.0
+pymongo==4.3.3
+pyspellchecker==0.7.1
+python-dotenv==1.0.0
+spellchecker==0.4
